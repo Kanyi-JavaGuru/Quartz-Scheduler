@@ -37,37 +37,40 @@ public class JobController {
 
 			if(cronExpression == null || cronExpression.trim().equals("")){
 				//Single Trigger
-				boolean status = jobService.scheduleOneTimeJob(jobName, SimpleJob.class, jobScheduleTime);
+				jobService.scheduleOneTimeJob(jobName, SimpleJob.class, jobScheduleTime);
 				
 			}else{
 				//Cron Trigger
-				boolean status = jobService.scheduleCronJob(jobName, CronJob.class, jobScheduleTime, cronExpression);
+				jobService.scheduleCronJob(jobName, CronJob.class, jobScheduleTime, cronExpression);
 								
 			}
 		}
 	}
 
 	@RequestMapping("unschedule")
-	public void unschedule(@RequestParam("jobName") String jobName) {
+	public String unschedule(@RequestParam("jobName") String jobName) {
 		System.out.println("JobController.unschedule()");
-		jobService.unScheduleJob(jobName);
+		boolean status = jobService.unScheduleJob(jobName);
+		if(status)
+			return "job "+jobName+" has been unscheduled";
+		return "job "+jobName+" has not been unscheduled";
 	}
 
 	@RequestMapping("delete")
-	public void delete(@RequestParam("jobName") String jobName) {
+	public String delete(@RequestParam("jobName") String jobName) {
 		System.out.println("JobController.delete()");		
 
 		if(jobService.isJobWithNamePresent(jobName)){
 			boolean isJobRunning = jobService.isJobRunning(jobName);
-
 			if(!isJobRunning){
-				boolean status = jobService.deleteJob(jobName);
+				jobService.deleteJob(jobName);
 			}
 		}
+		return "job "+jobName+" has been deleted";
 	}
 
 	@RequestMapping("pause")
-	public void pause(@RequestParam("jobName") String jobName) {
+	public String pause(@RequestParam("jobName") String jobName) {
 		System.out.println("JobController.pause()");
 
 		if(jobService.isJobWithNamePresent(jobName)){
@@ -75,13 +78,14 @@ public class JobController {
 			boolean isJobRunning = jobService.isJobRunning(jobName);
 
 			if(!isJobRunning) {
-				boolean status = jobService.pauseJob(jobName);
+				jobService.pauseJob(jobName);
 			}
 		}
+		return "job "+jobName+" has been stopped";
 	}
 
 	@RequestMapping("resume")
-	public void resume(@RequestParam("jobName") String jobName) {
+	public String resume(@RequestParam("jobName") String jobName) {
 		System.out.println("JobController.resume()");
 
 		if(jobService.isJobWithNamePresent(jobName)){
@@ -89,13 +93,14 @@ public class JobController {
 
 			if(jobState.equals("PAUSED")){
 				System.out.println("Job current state is PAUSED, Resuming job...");
-				boolean status = jobService.resumeJob(jobName);
+				jobService.resumeJob(jobName);
 			}
 		}
+		return "job "+jobName+" has been paused";
 	}
 
 	@RequestMapping("update")
-	public void updateJob(@RequestParam("jobName") String jobName, 
+	public String updateJob(@RequestParam("jobName") String jobName, 
 			@RequestParam("jobScheduleTime") @DateTimeFormat(pattern = "yyyy/MM/dd HH:mm") Date jobScheduleTime, 
 			@RequestParam("cronExpression") String cronExpression){
 		System.out.println("JobController.updateJob()");
@@ -109,65 +114,85 @@ public class JobController {
 			
 			if(cronExpression == null || cronExpression.trim().equals("")){
 				//Single Trigger
-				boolean status = jobService.updateOneTimeJob(jobName, jobScheduleTime);				
+				jobService.updateOneTimeJob(jobName, jobScheduleTime);
+				return "Please enter a jobname.";				
 			}else{
 				//Cron Trigger
-				boolean status = jobService.updateCronJob(jobName, jobScheduleTime, cronExpression);								
+				jobService.updateCronJob(jobName, jobScheduleTime, cronExpression);
+				return "job "+jobName+" successfully updated";						
 			}
 		}
+		return "job "+jobName+" does exist";
 	}
 
 	@RequestMapping("jobs")
-	public void getAllJobs(){
+	public List<Map<String, Object>> getAllJobs(){
 		System.out.println("JobController.getAllJobs()");
 		List<Map<String, Object>> list = jobService.getAllJobs();
+		return list;
 	}
 
 	@RequestMapping("checkJobName")
-	public void checkJobName(@RequestParam("jobName") String jobName){
+	public String checkJobName(@RequestParam("jobName") String jobName){
 		System.out.println("JobController.checkJobName()");
 		//Job Name is mandatory
 		if(jobName == null || jobName.trim().equals("")){
+			return "Please enter a jobname.";
 		}		
 		boolean status = jobService.isJobWithNamePresent(jobName);
+		if(status) {
+			return "job "+jobName+" does exist";
+		}
+		return "job "+jobName+" does not exist";
 	}
 
 	@RequestMapping("isJobRunning")
-	public void isJobRunning(@RequestParam("jobName") String jobName) {
+	public boolean isJobRunning(@RequestParam("jobName") String jobName) {
 		System.out.println("JobController.isJobRunning()");
 
 		boolean status = jobService.isJobRunning(jobName);
+		return status;
 	}
 
 	@RequestMapping("jobState")
-	public void getJobState(@RequestParam("jobName") String jobName) {
+	public String getJobState(@RequestParam("jobName") String jobName) {
 		System.out.println("JobController.getJobState()");
 
 		String jobState = jobService.getJobState(jobName);
+		
+		return jobState;
 	}
 
 	@RequestMapping("stop")
-	public void stopJob(@RequestParam("jobName") String jobName) {
+	public String stopJob(@RequestParam("jobName") String jobName) {
 		System.out.println("JobController.stopJob()");
 
 		if(jobService.isJobWithNamePresent(jobName)){
 
 			if(jobService.isJobRunning(jobName)){
-				boolean status = jobService.stopJob(jobName);
+				jobService.stopJob(jobName);
+				return "job "+jobName+" successfully stopped";
 			}
+
+			return "job "+jobName+" was not running";
 		}
+
+		return "job "+jobName+" does not exist";
 	}
 
 	@RequestMapping("start")
-	public void startJobNow(@RequestParam("jobName") String jobName) {
+	public String startJobNow(@RequestParam("jobName") String jobName) {
 		System.out.println("JobController.startJobNow()");
 
 		if(jobService.isJobWithNamePresent(jobName)){
 
 			if(!jobService.isJobRunning(jobName)){
-				boolean status = jobService.startJobNow(jobName);
+				jobService.startJobNow(jobName);
+				return "job "+jobName+" successfully started";
 			}
+			return "job "+jobName+" was already running";
 		}
+		return "job "+jobName+" does not exist";
 	}
 
 }
