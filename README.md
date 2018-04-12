@@ -12,3 +12,4 @@ in setting up the schedule.
 4. Run application
 5. Use postman to send requests to application endpoint e.g. to create a cronjob that runs every minute send the following request
 
+![scrren](https://user-images.githubusercontent.com/38307043/38658505-2bbdc79e-3e2e-11e8-8616-2bd7119f9925.png)
